@@ -5,9 +5,13 @@
 package it.polito.tdp.yelp;
 
 import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import it.polito.tdp.yelp.model.Model;
+import it.polito.tdp.yelp.model.User;
+import it.polito.tdp.yelp.model.UserSimili;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -38,13 +42,13 @@ public class FXMLController {
     private TextField txtX2; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbAnno"
-    private ComboBox<?> cmbAnno; // Value injected by FXMLLoader
+    private ComboBox<Integer> cmbAnno; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtN"
     private TextField txtN; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbUtente"
-    private ComboBox<?> cmbUtente; // Value injected by FXMLLoader
+    private ComboBox<User> cmbUtente; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtX1"
     private TextField txtX1; // Value injected by FXMLLoader
@@ -54,12 +58,72 @@ public class FXMLController {
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
-
+    	
+    	this.txtResult.clear();
+    	
+    	int N = 0;
+    	
+    	Integer anno = this.cmbAnno.getValue();
+    	
+    	try {
+    		N = Integer.parseInt(this.txtN.getText());
+    		
+    		if(N<=0.0){
+    			this.txtResult.setText("Numeri negativi non ammessi.");
+    			return;
+    		}
+    	}catch(NumberFormatException e) {
+    		txtResult.setText("Formato non corretto per il numero di recensioni.");
+    		return;
+    	}
+    	
+    	if(anno == null) {
+    		this.txtResult.appendText("Seleionare un anno per creare il grafo!");
+    		return;
+    	}
+    	
+    	this.model.creaGrafo(N, anno);
+    	
+    	this.txtResult.appendText(this.model.infoGrafo());
+    	
+    	List<User> users = this.model.getVertici(N);
+    	
+    	Collections.sort(users);
+    	
+    	this.cmbUtente.getItems().addAll(users);
+    	
+    	this.btnUtenteSimile.setDisable(false);	
     }
 
     @FXML
     void doUtenteSimile(ActionEvent event) {
-
+    	
+    	this.txtResult.clear();
+    	
+    	if(this.model.getGrafo() == null) {
+    		this.txtResult.clear();
+    		this.txtResult.setText("Creare prima il grafo!");
+    	}
+    	
+    	User u = this.cmbUtente.getValue();
+    	
+    	if(u == null) {
+    		this.txtResult.appendText("Devi selezionare un utente!");
+    		return;
+    	}
+    	
+    	List<UserSimili> simili = this.model.userSimili(u);
+    	
+    	if(simili.isEmpty()) {
+    		this.txtResult.appendText("\nNessun utente simile!");
+    	}
+    	
+    	this.txtResult.appendText("Lista utenti simili a "+u+":");
+    	
+    	for(UserSimili us : simili) {
+    		this.txtResult.appendText("\n"+us.getU()+"	Grado: "+us.getGrado());
+    	}
+    	
     }
     
     @FXML
@@ -84,5 +148,10 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	for(int a = 2005; a<=2013; a++) {
+    		this.cmbAnno.getItems().add(a);
+    	}
+    	
+    	this.btnUtenteSimile.setDisable(true);
     }
 }
